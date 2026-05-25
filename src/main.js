@@ -18,6 +18,7 @@ import {
   setHp,
   showMenu,
   showGameOver,
+  showCrosshair,
   flashHit,
   getStartButton,
   getRetryButton,
@@ -70,30 +71,30 @@ function init() {
 }
 
 function addStarfield(scene) {
-  const starCount = 200;
-  const positions = new Float32Array(starCount * 6);
-  for (let i = 0; i < starCount; i++) {
+  // Two layers: bright big stars + dimmer small stars for depth.
+  scene.add(makeStarLayer(120, 3, 0xffffff));
+  scene.add(makeStarLayer(400, 2, 0xaaccff));
+  scene.add(makeStarLayer(600, 1, 0x6688bb));
+}
+
+function makeStarLayer(count, size, color) {
+  const positions = new Float32Array(count * 3);
+  const r = 300;
+  for (let i = 0; i < count; i++) {
     const theta = Math.random() * Math.PI * 2;
     const phi = Math.acos(2 * Math.random() - 1);
-    const r = 200;
-    const x = r * Math.sin(phi) * Math.cos(theta);
-    const y = r * Math.cos(phi);
-    const z = r * Math.sin(phi) * Math.sin(theta);
-    positions[i * 6] = x;
-    positions[i * 6 + 1] = y;
-    positions[i * 6 + 2] = z;
-    positions[i * 6 + 3] = x * 1.002;
-    positions[i * 6 + 4] = y * 1.002;
-    positions[i * 6 + 5] = z * 1.002;
+    positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+    positions[i * 3 + 1] = r * Math.cos(phi);
+    positions[i * 3 + 2] = r * Math.sin(phi) * Math.sin(theta);
   }
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-  scene.add(
-    new THREE.LineSegments(
-      geo,
-      new THREE.LineBasicMaterial({ color: 0x6666aa })
-    )
-  );
+  const mat = new THREE.PointsMaterial({
+    color,
+    size,
+    sizeAttenuation: false,
+  });
+  return new THREE.Points(geo, mat);
 }
 
 async function onStart() {
@@ -111,6 +112,7 @@ function startGame() {
   projectiles.reset();
   showMenu(false);
   showGameOver(false);
+  showCrosshair(true);
   state = STATE.PLAYING;
 }
 
@@ -135,6 +137,7 @@ function gameOver() {
     highScore = score;
     setHighScore(highScore);
   }
+  showCrosshair(false);
   showGameOver(true, score, highScore);
 }
 

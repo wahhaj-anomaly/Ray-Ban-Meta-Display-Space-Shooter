@@ -11,6 +11,11 @@ export function initHud() {
   els.flash = document.getElementById('flash');
   els.startBtn = document.getElementById('start-btn');
   els.retryBtn = document.getElementById('retry-btn');
+  els.crosshair = document.getElementById('crosshair');
+}
+
+export function showCrosshair(show) {
+  els.crosshair.style.display = show ? 'block' : 'none';
 }
 
 export function setScore(s) {
