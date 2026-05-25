@@ -1,0 +1,138 @@
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  padding: 0;
+  background: #000;
+  overflow: hidden;
+  width: 600px;
+  height: 600px;
+  font-family: 'Courier New', monospace;
+  color: #00ffff;
+}
+#game {
+  display: block;
+  width: 600px;
+  height: 600px;
+}
+#hud {
+  position: absolute;
+  inset: 0;
+  width: 600px;
+  height: 600px;
+  pointer-events: none;
+  user-select: none;
+}
+#score {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  font-size: 22px;
+  text-shadow: 0 0 8px #00ffff;
+}
+#wave {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  font-size: 22px;
+  text-shadow: 0 0 8px #00ffff;
+}
+#hp-bar {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 400px;
+  height: 16px;
+  border: 2px solid #00ffff;
+  box-shadow: 0 0 8px #00ffff;
+}
+#hp-fill {
+  width: 100%;
+  height: 100%;
+  background: #33ff66;
+  transition: width 120ms linear, background 200ms linear;
+}
+#crosshair {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 32px;
+  height: 32px;
+  pointer-events: none;
+}
+#crosshair::before,
+#crosshair::after {
+  content: '';
+  position: absolute;
+  background: #66ff66;
+  box-shadow: 0 0 6px #66ff66;
+}
+#crosshair::before {
+  left: 50%;
+  top: 4px;
+  bottom: 4px;
+  width: 2px;
+  transform: translateX(-50%);
+}
+#crosshair::after {
+  top: 50%;
+  left: 4px;
+  right: 4px;
+  height: 2px;
+  transform: translateY(-50%);
+}
+#menu, #game-over {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 32px;
+  pointer-events: auto;
+  text-align: center;
+}
+#menu h1 {
+  font-size: 40px;
+  margin: 0;
+  letter-spacing: 4px;
+  text-shadow: 0 0 12px #00ffff;
+}
+#menu p, #game-over p {
+  font-size: 18px;
+  margin: 0;
+}
+.focusable {
+  min-width: 200px;
+  min-height: 88px;
+  border: 3px solid #00ffff;
+  background: transparent;
+  color: #00ffff;
+  font-family: inherit;
+  font-size: 24px;
+  letter-spacing: 4px;
+  cursor: pointer;
+  outline: none;
+  box-shadow: 0 0 12px #00ffff;
+}
+.focusable:focus,
+.focusable:hover {
+  background: rgba(0, 255, 255, 0.15);
+  box-shadow: 0 0 20px #00ffff, inset 0 0 12px #00ffff;
+}
+#game-over h1 {
+  font-size: 36px;
+  color: #ff3366;
+  text-shadow: 0 0 12px #ff3366;
+  margin: 0;
+}
+#flash {
+  position: absolute;
+  inset: 0;
+  background: #ff0033;
+  opacity: 0;
+  transition: opacity 100ms linear;
+  mix-blend-mode: screen;
+  pointer-events: none;
+}

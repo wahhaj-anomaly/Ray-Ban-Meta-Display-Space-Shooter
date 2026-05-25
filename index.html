@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=600, height=600, initial-scale=1.0, user-scalable=no" />
+  <title>Space Shooter</title>
+  <link rel="stylesheet" href="./styles.css" />
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+      }
+    }
+  </script>
+</head>
+<body>
+  <canvas id="game" width="600" height="600"></canvas>
+  <div id="hud">
+    <div id="score">SCORE 0</div>
+    <div id="wave">WAVE 0</div>
+    <div id="hp-bar"><div id="hp-fill"></div></div>
+    <div id="crosshair"></div>
+    <div id="flash"></div>
+    <div id="menu">
+      <h1>SPACE SHOOTER</h1>
+      <p>LOOK TO AIM &mdash; ENTER TO FIRE</p>
+      <button id="start-btn" class="focusable">START</button>
+    </div>
+    <div id="game-over" style="display:none">
+      <h1>GAME OVER</h1>
+      <p id="final-score">SCORE 0</p>
+      <p id="high-score">BEST  0</p>
+      <button id="retry-btn" class="focusable">RETRY</button>
+    </div>
+  </div>
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
