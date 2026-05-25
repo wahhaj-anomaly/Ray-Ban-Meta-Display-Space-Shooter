@@ -1,4 +1,11 @@
+import * as THREE from 'three';
+
 const els = {};
+let indicatorCtx = null;
+
+const _camSpace = new THREE.Vector3();
+const _ndc = new THREE.Vector3();
+const ARROW_MARGIN = 0.88;
 
 export function initHud() {
   els.score = document.getElementById('score');
@@ -12,6 +19,60 @@ export function initHud() {
   els.startBtn = document.getElementById('start-btn');
   els.retryBtn = document.getElementById('retry-btn');
   els.crosshair = document.getElementById('crosshair');
+  els.indicators = document.getElementById('indicators');
+  indicatorCtx = els.indicators.getContext('2d');
+}
+
+export function drawEnemyIndicators(enemyList, camera) {
+  const ctx = indicatorCtx;
+  if (!ctx) return;
+  ctx.clearRect(0, 0, 600, 600);
+  if (!enemyList) return;
+
+  for (const e of enemyList) {
+    if (!e.active) continue;
+
+    // In camera-local space, +z is behind the camera in Three.js.
+    _camSpace.copy(e.obj.position).applyMatrix4(camera.matrixWorldInverse);
+    const behind = _camSpace.z > 0;
+
+    _ndc.copy(e.obj.position).project(camera);
+    let nx = _ndc.x;
+    let ny = _ndc.y;
+    // Perspective divide flips sign for behind-camera points; undo that.
+    if (behind) {
+      nx = -nx;
+      ny = -ny;
+    }
+
+    const onScreen =
+      !behind && Math.abs(_ndc.x) <= 1 && Math.abs(_ndc.y) <= 1;
+    if (onScreen) continue;
+
+    const m = Math.max(Math.abs(nx), Math.abs(ny));
+    if (m === 0) continue;
+    nx = (nx / m) * ARROW_MARGIN;
+    ny = (ny / m) * ARROW_MARGIN;
+
+    const sx = (nx * 0.5 + 0.5) * 600;
+    const sy = (-ny * 0.5 + 0.5) * 600;
+    const angle = Math.atan2(-ny, nx);
+
+    ctx.save();
+    ctx.translate(sx, sy);
+    ctx.rotate(angle);
+    ctx.fillStyle = '#ff3366';
+    ctx.shadowColor = '#ff3366';
+    ctx.shadowBlur = 8;
+    ctx.beginPath();
+    ctx.moveTo(16, 0);
+    ctx.lineTo(-8, -10);
+    ctx.lineTo(-3, 0);
+    ctx.lineTo(-8, 10);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
 }
 
 export function showCrosshair(show) {

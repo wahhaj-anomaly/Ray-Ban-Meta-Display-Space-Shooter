@@ -19,6 +19,7 @@ import {
   showMenu,
   showGameOver,
   showCrosshair,
+  drawEnemyIndicators,
   flashHit,
   getStartButton,
   getRetryButton,
@@ -174,6 +175,7 @@ function loop(t) {
   }
 
   renderer.render(scene, camera);
+  drawEnemyIndicators(state === STATE.PLAYING ? enemies.list : null, camera);
   endFrame();
 }
 

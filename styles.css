@@ -52,6 +52,14 @@ html, body {
   background: #33ff66;
   transition: width 120ms linear, background 200ms linear;
 }
+#indicators {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 600px;
+  height: 600px;
+  pointer-events: none;
+}
 #crosshair {
   position: absolute;
   left: 50%;
