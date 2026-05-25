@@ -91,6 +91,14 @@ html, body {
   height: 2px;
   transform: translateY(-50%);
 }
+@keyframes fire-pulse {
+  0%   { transform: translate(-50%, -50%) scale(1); filter: none; }
+  30%  { transform: translate(-50%, -50%) scale(1.5); filter: brightness(2); }
+  100% { transform: translate(-50%, -50%) scale(1); filter: none; }
+}
+#crosshair.fire-pulse {
+  animation: fire-pulse 140ms ease-out;
+}
 #menu, #game-over {
   position: absolute;
   inset: 0;

@@ -79,6 +79,14 @@ export function showCrosshair(show) {
   els.crosshair.style.display = show ? 'block' : 'none';
 }
 
+export function pulseCrosshair() {
+  const el = els.crosshair;
+  el.classList.remove('fire-pulse');
+  // Force a reflow so the animation restarts on rapid fire.
+  void el.offsetWidth;
+  el.classList.add('fire-pulse');
+}
+
 export function setScore(s) {
   els.score.textContent = `SCORE ${s}`;
 }

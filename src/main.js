@@ -10,6 +10,7 @@ import {
 } from './input.js';
 import { EnemyPool } from './enemies.js';
 import { ProjectilePool } from './projectiles.js';
+import { EffectsPool } from './effects.js';
 import { Waves } from './waves.js';
 import {
   initHud,
@@ -21,6 +22,7 @@ import {
   showCrosshair,
   drawEnemyIndicators,
   flashHit,
+  pulseCrosshair,
   getStartButton,
   getRetryButton,
 } from './hud.js';
@@ -31,7 +33,7 @@ const MAX_HP = 100;
 const STATE = { MENU: 0, PLAYING: 1, GAME_OVER: 2 };
 
 let renderer, scene, camera;
-let enemies, projectiles, waves;
+let enemies, projectiles, effects, waves;
 let state = STATE.MENU;
 let score = 0;
 let hp = MAX_HP;
@@ -54,6 +56,7 @@ function init() {
 
   enemies = new EnemyPool(scene);
   projectiles = new ProjectilePool(scene);
+  effects = new EffectsPool(scene);
   waves = new Waves(enemies);
 
   initInput();
@@ -111,6 +114,7 @@ function startGame() {
   setHp(hp, MAX_HP);
   waves.reset();
   projectiles.reset();
+  effects.reset();
   showMenu(false);
   showGameOver(false);
   showCrosshair(true);
@@ -155,12 +159,15 @@ function loop(t) {
     setWave(waves.current());
     enemies.update(dt, projectiles, onPlayerDamage);
     projectiles.update(dt, () => onPlayerDamage(10));
+    effects.update(dt);
 
     if (firePressedThisFrame()) {
       playLaser();
+      pulseCrosshair();
       raycaster.setFromCamera(screenCenter, camera);
       const hit = enemies.raycastHit(raycaster.ray, 100);
       if (hit) {
+        effects.spawnHit(hit.obj.position, camera);
         enemies.kill(hit);
         onEnemyKilled();
       }
