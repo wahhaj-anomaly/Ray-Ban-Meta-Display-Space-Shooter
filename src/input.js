@@ -48,6 +48,13 @@ function onKeyUp(e) {
   keysDown.delete(e.key);
 }
 
+function onPointerDown(e) {
+  // Don't intercept taps on focusable controls (start/retry buttons) —
+  // their own click handlers handle the activation.
+  if (e.target && e.target.closest && e.target.closest('.focusable')) return;
+  keysPressedThisFrame.add(DPAD.SELECT);
+}
+
 function onOrientation(e) {
   if (e.alpha == null) return;
   orientation = { alpha: e.alpha, beta: e.beta, gamma: e.gamma };
@@ -57,6 +64,7 @@ function onOrientation(e) {
 export function initInput() {
   window.addEventListener('keydown', onKeyDown);
   window.addEventListener('keyup', onKeyUp);
+  window.addEventListener('pointerdown', onPointerDown);
   window.addEventListener('deviceorientation', onOrientation, true);
 }
 

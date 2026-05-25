@@ -8,6 +8,10 @@ html, body {
   height: 600px;
   font-family: 'Courier New', monospace;
   color: #00ffff;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 #game {
   display: block;
