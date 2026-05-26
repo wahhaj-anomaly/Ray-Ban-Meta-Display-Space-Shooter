@@ -85,7 +85,18 @@ export class ProjectilePool {
     );
   }
 
-  spawnEnemy(origin, targetPos, spreadDeg = 3) {
+  spawnPlayerInDirection(camera, dir) {
+    _origin.copy(camera.position).addScaledVector(dir, 2);
+    return this._spawn(
+      this.player,
+      _origin,
+      dir,
+      PLAYER_SPEED,
+      PLAYER_LIFETIME
+    );
+  }
+
+  spawnEnemy(origin, targetPos, spreadDeg = 3, speed = ENEMY_SPEED) {
     _dir.copy(targetPos).sub(origin).normalize();
     if (spreadDeg > 0) {
       const r = (spreadDeg * Math.PI) / 180;
@@ -96,7 +107,7 @@ export class ProjectilePool {
       );
       _dir.add(_v).normalize();
     }
-    return this._spawn(this.enemy, origin, _dir, ENEMY_SPEED, ENEMY_LIFETIME);
+    return this._spawn(this.enemy, origin, _dir, speed, ENEMY_LIFETIME);
   }
 
   update(dt, onPlayerHit) {

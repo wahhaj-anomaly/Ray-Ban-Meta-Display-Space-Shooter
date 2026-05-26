@@ -1,12 +1,9 @@
 import * as THREE from 'three';
 
-const POOL_SIZE = 12;
-const LIFETIME = 0.4;
-const START_SCALE = 0.6;
-const END_SCALE = 4.0;
-const SEGMENTS = 24;
+const POOL_SIZE = 14;
+const SEGMENTS = 32;
 
-function makeRing(color) {
+function makeRing() {
   const positions = new Float32Array(SEGMENTS * 3);
   for (let i = 0; i < SEGMENTS; i++) {
     const a = (i / SEGMENTS) * Math.PI * 2;
@@ -17,7 +14,7 @@ function makeRing(color) {
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
   const mat = new THREE.LineBasicMaterial({
-    color,
+    color: 0xffffff,
     transparent: true,
     blending: THREE.AdditiveBlending,
   });
@@ -31,26 +28,49 @@ export class EffectsPool {
     this.scene = scene;
     this.list = [];
     for (let i = 0; i < POOL_SIZE; i++) {
-      const obj = makeRing(0xffaa33);
+      const obj = makeRing();
       scene.add(obj);
-      this.list.push({ obj, ttl: 0, active: false });
+      this.list.push({
+        obj,
+        ttl: 0,
+        lifetime: 0,
+        startScale: 0,
+        endScale: 0,
+        active: false,
+      });
     }
   }
 
-  spawnHit(position, camera) {
+  _spawn(position, camera, color, startScale, endScale, lifetime) {
     let target = null;
     for (const b of this.list) {
       if (!b.active) { target = b; break; }
     }
-    if (!target) return;
+    if (!target) return null;
     target.active = true;
-    target.ttl = LIFETIME;
+    target.ttl = lifetime;
+    target.lifetime = lifetime;
+    target.startScale = startScale;
+    target.endScale = endScale;
     target.obj.visible = true;
     target.obj.position.copy(position);
-    // Billboard the ring to face the camera.
     target.obj.quaternion.copy(camera.quaternion);
-    target.obj.scale.setScalar(START_SCALE);
+    target.obj.scale.setScalar(startScale);
+    target.obj.material.color.setHex(color);
     target.obj.material.opacity = 1;
+    return target;
+  }
+
+  spawnHit(position, camera) {
+    return this._spawn(position, camera, 0xffaa33, 0.6, 4.0, 0.4);
+  }
+
+  spawnBigHit(position, camera) {
+    return this._spawn(position, camera, 0xff66aa, 1.0, 8.0, 0.6);
+  }
+
+  spawnPulse(position, camera) {
+    return this._spawn(position, camera, 0x66ffff, 0.5, 50.0, 0.8);
   }
 
   update(dt) {
@@ -62,8 +82,8 @@ export class EffectsPool {
         b.obj.visible = false;
         continue;
       }
-      const t = 1 - b.ttl / LIFETIME;
-      b.obj.scale.setScalar(START_SCALE + (END_SCALE - START_SCALE) * t);
+      const t = 1 - b.ttl / b.lifetime;
+      b.obj.scale.setScalar(b.startScale + (b.endScale - b.startScale) * t);
       b.obj.material.opacity = 1 - t;
     }
   }

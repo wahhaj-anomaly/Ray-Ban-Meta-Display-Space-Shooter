@@ -91,8 +91,8 @@ export function setScore(s) {
   els.score.textContent = `SCORE ${s}`;
 }
 
-export function setWave(w) {
-  els.wave.textContent = `WAVE ${w}`;
+export function setWave(text) {
+  els.wave.textContent = `WAVE ${text}`;
 }
 
 export function setHp(hp, max) {
@@ -116,10 +116,42 @@ export function showGameOver(show, finalScore = 0, highScore = 0) {
 }
 
 export function flashHit() {
+  els.flash.style.background = '#ff0033';
   els.flash.style.opacity = '1';
   setTimeout(() => {
     els.flash.style.opacity = '0';
   }, 120);
+}
+
+export function flashWin() {
+  els.flash.style.background = '#33ff99';
+  els.flash.style.opacity = '1';
+  setTimeout(() => {
+    els.flash.style.opacity = '0';
+  }, 220);
+}
+
+export function drawCollectionProgress(progress, colorHex) {
+  if (!indicatorCtx || progress <= 0) return;
+  const ctx = indicatorCtx;
+  const cx = 300;
+  const cy = 300;
+  const radius = 30;
+  ctx.save();
+  ctx.strokeStyle = colorHex;
+  ctx.shadowColor = colorHex;
+  ctx.shadowBlur = 10;
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.arc(
+    cx,
+    cy,
+    radius,
+    -Math.PI / 2,
+    -Math.PI / 2 + Math.min(1, progress) * Math.PI * 2
+  );
+  ctx.stroke();
+  ctx.restore();
 }
 
 export function getStartButton() {
