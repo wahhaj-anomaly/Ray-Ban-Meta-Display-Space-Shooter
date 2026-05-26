@@ -1,11 +1,11 @@
 import * as THREE from 'three';
 
-const PLAYER_SPEED = 60;
-const PLAYER_LIFETIME = 2;
 const ENEMY_SPEED = 20;
 const ENEMY_LIFETIME = 4;
-const PLAYER_POOL = 32;
 const ENEMY_POOL = 64;
+const TRACER_POOL = 24;
+const TRACER_LIFETIME = 0.22;
+const TRACER_MAX_RANGE = 100;
 const PLAYER_HIT_RADIUS_SQ = 1.0;
 
 const _dir = new THREE.Vector3();
@@ -13,16 +13,29 @@ const _v = new THREE.Vector3();
 const _origin = new THREE.Vector3();
 const _forward = new THREE.Vector3(0, 0, -1);
 
-function makeBullet(color, length, additive = false) {
+function makeEnemyBullet(color, length) {
   const geo = new THREE.BufferGeometry();
   geo.setAttribute(
     'position',
     new THREE.Float32BufferAttribute([0, 0, 0, 0, 0, -length], 3)
   );
+  const mat = new THREE.LineBasicMaterial({ color });
+  const line = new THREE.Line(geo, mat);
+  line.visible = false;
+  return line;
+}
+
+function makeTracer() {
+  // Unit-length tracer; scale.z is set per spawn to match hit distance.
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute(
+    'position',
+    new THREE.Float32BufferAttribute([0, 0, 0, 0, 0, -1], 3)
+  );
   const mat = new THREE.LineBasicMaterial({
-    color,
-    transparent: additive,
-    blending: additive ? THREE.AdditiveBlending : THREE.NormalBlending,
+    color: 0xaaffaa,
+    transparent: true,
+    blending: THREE.AdditiveBlending,
   });
   const line = new THREE.Line(geo, mat);
   line.visible = false;
@@ -32,19 +45,18 @@ function makeBullet(color, length, additive = false) {
 export class ProjectilePool {
   constructor(scene) {
     this.scene = scene;
-    this.player = [];
+    this.tracer = [];
     this.enemy = [];
-    for (let i = 0; i < PLAYER_POOL; i++) {
-      this.player.push({
-        obj: this._add(makeBullet(0x66ff99, 5, true)),
-        vel: new THREE.Vector3(),
+    for (let i = 0; i < TRACER_POOL; i++) {
+      this.tracer.push({
+        obj: this._add(makeTracer()),
         ttl: 0,
         active: false,
       });
     }
     for (let i = 0; i < ENEMY_POOL; i++) {
       this.enemy.push({
-        obj: this._add(makeBullet(0xff33ff, 1.2)),
+        obj: this._add(makeEnemyBullet(0xff33ff, 1.2)),
         vel: new THREE.Vector3(),
         ttl: 0,
         active: false,
@@ -57,8 +69,8 @@ export class ProjectilePool {
     return obj;
   }
 
-  _spawn(pool, origin, dir, speed, ttl) {
-    for (const b of pool) {
+  _spawnEnemyBullet(origin, dir, speed, ttl) {
+    for (const b of this.enemy) {
       if (b.active) continue;
       b.active = true;
       b.ttl = ttl;
@@ -71,29 +83,30 @@ export class ProjectilePool {
     return null;
   }
 
-  spawnPlayer(camera) {
-    camera.getWorldDirection(_dir);
-    // Offset the spawn forward so the whole tracer is in front of the
-    // near plane and visible immediately, not clipped against the camera.
-    _origin.copy(camera.position).addScaledVector(_dir, 2);
-    return this._spawn(
-      this.player,
-      _origin,
-      _dir,
-      PLAYER_SPEED,
-      PLAYER_LIFETIME
-    );
+  spawnTracer(origin, dir, length) {
+    for (const t of this.tracer) {
+      if (t.active) continue;
+      t.active = true;
+      t.ttl = TRACER_LIFETIME;
+      t.obj.visible = true;
+      t.obj.position.copy(origin);
+      t.obj.quaternion.setFromUnitVectors(_forward, dir);
+      t.obj.scale.set(1, 1, Math.max(1, length));
+      t.obj.material.opacity = 1;
+      return t;
+    }
+    return null;
   }
 
-  spawnPlayerInDirection(camera, dir) {
-    _origin.copy(camera.position).addScaledVector(dir, 2);
-    return this._spawn(
-      this.player,
-      _origin,
-      dir,
-      PLAYER_SPEED,
-      PLAYER_LIFETIME
-    );
+  spawnPlayer(camera, hitDist = TRACER_MAX_RANGE) {
+    camera.getWorldDirection(_dir);
+    _origin.copy(camera.position).addScaledVector(_dir, 0.5);
+    return this.spawnTracer(_origin, _dir, hitDist);
+  }
+
+  spawnPlayerInDirection(camera, dir, hitDist = TRACER_MAX_RANGE) {
+    _origin.copy(camera.position).addScaledVector(dir, 0.5);
+    return this.spawnTracer(_origin, dir, hitDist);
   }
 
   spawnEnemy(origin, targetPos, spreadDeg = 3, speed = ENEMY_SPEED) {
@@ -107,36 +120,44 @@ export class ProjectilePool {
       );
       _dir.add(_v).normalize();
     }
-    return this._spawn(this.enemy, origin, _dir, speed, ENEMY_LIFETIME);
+    return this._spawnEnemyBullet(origin, _dir, speed, ENEMY_LIFETIME);
   }
 
   update(dt, onPlayerHit) {
-    for (const b of this.player) {
-      if (!b.active) continue;
-      b.obj.position.addScaledVector(b.vel, dt);
-      b.ttl -= dt;
-      if (b.ttl <= 0) this._retire(b);
+    for (const t of this.tracer) {
+      if (!t.active) continue;
+      t.ttl -= dt;
+      if (t.ttl <= 0) {
+        this._retireTracer(t);
+        continue;
+      }
+      t.obj.material.opacity = t.ttl / TRACER_LIFETIME;
     }
     for (const b of this.enemy) {
       if (!b.active) continue;
       b.obj.position.addScaledVector(b.vel, dt);
       b.ttl -= dt;
       if (b.obj.position.lengthSq() < PLAYER_HIT_RADIUS_SQ) {
-        this._retire(b);
+        this._retireBullet(b);
         onPlayerHit();
         continue;
       }
-      if (b.ttl <= 0) this._retire(b);
+      if (b.ttl <= 0) this._retireBullet(b);
     }
   }
 
-  _retire(b) {
+  _retireTracer(t) {
+    t.active = false;
+    t.obj.visible = false;
+  }
+
+  _retireBullet(b) {
     b.active = false;
     b.obj.visible = false;
   }
 
   reset() {
-    for (const b of this.player) this._retire(b);
-    for (const b of this.enemy) this._retire(b);
+    for (const t of this.tracer) this._retireTracer(t);
+    for (const b of this.enemy) this._retireBullet(b);
   }
 }

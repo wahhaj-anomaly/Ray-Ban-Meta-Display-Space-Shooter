@@ -214,34 +214,28 @@ function handleHit(hit) {
   }
 }
 
+function fireRay(ndc) {
+  raycaster.setFromCamera(ndc, camera);
+  const hit = enemies.raycastHit(raycaster.ray, 100);
+  const dist = hit
+    ? raycaster.ray.origin.distanceTo(hit.obj.position)
+    : 100;
+  _dir.copy(raycaster.ray.direction);
+  projectiles.spawnPlayerInDirection(camera, _dir, dist);
+  handleHit(hit);
+}
+
 function fire() {
   playLaser();
   pulseCrosshair();
 
   if (multishotCharges > 0) {
     multishotCharges -= 1;
-    raycaster.setFromCamera(_ndcL, camera);
-    const hitL = enemies.raycastHit(raycaster.ray, 100);
-    _dir.copy(raycaster.ray.direction);
-    projectiles.spawnPlayerInDirection(camera, _dir);
-    handleHit(hitL);
-
-    raycaster.setFromCamera(screenCenter, camera);
-    const hitC = enemies.raycastHit(raycaster.ray, 100);
-    _dir.copy(raycaster.ray.direction);
-    projectiles.spawnPlayerInDirection(camera, _dir);
-    handleHit(hitC);
-
-    raycaster.setFromCamera(_ndcR, camera);
-    const hitR = enemies.raycastHit(raycaster.ray, 100);
-    _dir.copy(raycaster.ray.direction);
-    projectiles.spawnPlayerInDirection(camera, _dir);
-    handleHit(hitR);
+    fireRay(_ndcL);
+    fireRay(screenCenter);
+    fireRay(_ndcR);
   } else {
-    raycaster.setFromCamera(screenCenter, camera);
-    const hit = enemies.raycastHit(raycaster.ray, 100);
-    projectiles.spawnPlayer(camera);
-    handleHit(hit);
+    fireRay(screenCenter);
   }
 }
 
