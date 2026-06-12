@@ -123,10 +123,16 @@ function makeStarLayer(count, size, color) {
   return new THREE.Points(geo, mat);
 }
 
+let starting = false;
 async function onStart() {
+  // Guard against double-activation: a focused Start button fires this via
+  // its click handler, while an unfocused Enter fires it from the loop.
+  if (starting || state !== STATE.MENU) return;
+  starting = true;
   initAudio();
   await requestOrientationPermission();
   startGame();
+  starting = false;
 }
 
 function startGame() {
@@ -280,6 +286,8 @@ function loop(t) {
     if (firePressedThisFrame()) fire();
 
     updateWaveLabel();
+  } else if (state === STATE.MENU) {
+    if (firePressedThisFrame()) onStart();
   } else if (state === STATE.GAME_OVER) {
     if (backPressedThisFrame()) {
       showGameOver(false);
