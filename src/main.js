@@ -43,9 +43,9 @@ const MAX_HP = 100;
 const STATE = { MENU: 0, PLAYING: 1, GAME_OVER: 2 };
 const SCORE_KILL = 100;
 const SCORE_BOSS = 500;
-const POWERUP_DROP_CHANCE = 0.2;
+const POWERUP_DROP_CHANCE = 0.5;
 const BOSS_DROPS = 3;
-const SHIELD_HEAL = 30;
+const SHIELD_HEAL = 50;
 const MULTISHOT_CHARGES = 10;
 const MULTISHOT_NDC_OFFSET = 0.08;
 
@@ -223,12 +223,25 @@ function handleHit(hit) {
 function fireRay(ndc) {
   raycaster.setFromCamera(ndc, camera);
   const hit = enemies.raycastHit(raycaster.ray, 100);
-  const dist = hit
+  const enemyDist = hit
     ? raycaster.ray.origin.distanceTo(hit.obj.position)
     : 100;
+  const bullet = projectiles.raycastEnemyBullet(raycaster.ray, 100);
+  const bulletDist = bullet
+    ? raycaster.ray.origin.distanceTo(bullet.obj.position)
+    : Infinity;
+
   _dir.copy(raycaster.ray.direction);
-  projectiles.spawnPlayerInDirection(camera, _dir, dist);
-  handleHit(hit);
+
+  if (bullet && bulletDist < enemyDist) {
+    // An incoming bullet is closer than any enemy — the shot stops there.
+    projectiles.destroyEnemyBullet(bullet);
+    effects.spawnHit(bullet.obj.position, camera);
+    projectiles.spawnPlayerInDirection(camera, _dir, bulletDist);
+  } else {
+    projectiles.spawnPlayerInDirection(camera, _dir, enemyDist);
+    handleHit(hit);
+  }
 }
 
 function fire() {

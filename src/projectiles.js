@@ -8,6 +8,14 @@ const TRACER_LIFETIME = 0.22;
 const TRACER_MAX_RANGE = 100;
 const PLAYER_HIT_RADIUS_SQ = 1.0;
 
+// --- Enemy bullet size / hitbox tuning ---------------------------------
+// Base radius the player's shot must pass within to destroy a bullet.
+const ENEMY_BULLET_HIT_RADIUS = 0.6;
+// A fraction of bullets spawn larger, with a proportionally bigger hitbox.
+const BIG_BULLET_CHANCE = 0.3;
+const BIG_BULLET_SCALE = 1.7;
+// -----------------------------------------------------------------------
+
 const _dir = new THREE.Vector3();
 const _v = new THREE.Vector3();
 const _origin = new THREE.Vector3();
@@ -60,6 +68,7 @@ export class ProjectilePool {
         vel: new THREE.Vector3(),
         ttl: 0,
         active: false,
+        hitRadius: ENEMY_BULLET_HIT_RADIUS,
       });
     }
   }
@@ -74,6 +83,10 @@ export class ProjectilePool {
       if (b.active) continue;
       b.active = true;
       b.ttl = ttl;
+      const big = Math.random() < BIG_BULLET_CHANCE;
+      const scale = big ? BIG_BULLET_SCALE : 1;
+      b.obj.scale.setScalar(scale);
+      b.hitRadius = ENEMY_BULLET_HIT_RADIUS * scale;
       b.obj.visible = true;
       b.obj.position.copy(origin);
       b.obj.quaternion.setFromUnitVectors(_forward, dir);
@@ -81,6 +94,27 @@ export class ProjectilePool {
       return b;
     }
     return null;
+  }
+
+  // Returns the nearest active enemy bullet the ray passes within hitRadius
+  // of, up to maxDist, or null. Used so player shots can destroy bullets.
+  raycastEnemyBullet(ray, maxDist = TRACER_MAX_RANGE) {
+    let nearest = null;
+    let nearestDist = maxDist;
+    for (const b of this.enemy) {
+      if (!b.active) continue;
+      const dist = ray.origin.distanceTo(b.obj.position);
+      if (dist > nearestDist) continue;
+      if (ray.distanceToPoint(b.obj.position) <= b.hitRadius) {
+        nearest = b;
+        nearestDist = dist;
+      }
+    }
+    return nearest;
+  }
+
+  destroyEnemyBullet(b) {
+    this._retireBullet(b);
   }
 
   spawnTracer(origin, dir, length) {
