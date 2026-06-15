@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 
-const SPAWN_INTERVAL = 0.3;
-const WAVE_BREAK = 2.0;
+const SPAWN_INTERVAL = 1.5;
+const WAVE_BREAK = 3.0;
 const BOSS_EVERY = 5;
 
 const _dir = new THREE.Vector3();

@@ -1,7 +1,24 @@
 import * as THREE from 'three';
 
-const SPAWN_RADIUS = 40;
+const SPAWN_RADIUS = 10;
 const COLLISION_DIST_SQ = 2.0 * 2.0;
+
+// --- Enemy approach speed tuning ---------------------------------------
+// How fast each enemy type moves toward you. Base speed is the wave-1
+// value; *_PER_WAVE is added each wave. SPEED_MULTIPLIER scales them all.
+const SPEED_MULTIPLIER = 0.5;
+
+const DRIFTER_BASE_SPEED = 1.5;
+const DRIFTER_SPEED_PER_WAVE = 0.2;
+
+const SNIPER_SPEED = 1.2;
+
+const SWARMER_BASE_SPEED = 3.5;
+const SWARMER_SPEED_PER_WAVE = 0.2;
+
+// How often enemies shoot. 1.0 = normal, 0.5 = half as often, 2.0 = twice.
+const FIRE_RATE_MULTIPLIER = 0.5;
+// -----------------------------------------------------------------------
 const FORWARD_AVOID_COS = Math.cos((30 * Math.PI) / 180);
 const DEG = Math.PI / 180;
 
@@ -188,24 +205,24 @@ export class EnemyPool {
     if (type === 'drifter') {
       target.hp = def.hp;
       target.maxHp = def.hp;
-      target.speed = 1.5 + wave * 0.2;
-      target.fireInterval = Math.max(0.6, 2 - wave * 0.05);
+      target.speed = (DRIFTER_BASE_SPEED + wave * DRIFTER_SPEED_PER_WAVE) * SPEED_MULTIPLIER;
+      target.fireInterval = Math.max(0.6, 2 - wave * 0.05) / FIRE_RATE_MULTIPLIER;
     } else if (type === 'sniper') {
       target.hp = def.hp;
       target.maxHp = def.hp;
-      target.speed = 1.2;
-      target.fireInterval = 1.2;
+      target.speed = SNIPER_SPEED * SPEED_MULTIPLIER;
+      target.fireInterval = 1.2 / FIRE_RATE_MULTIPLIER;
     } else if (type === 'swarmer') {
       target.hp = def.hp;
       target.maxHp = def.hp;
-      target.speed = 3.5 + wave * 0.2;
+      target.speed = (SWARMER_BASE_SPEED + wave * SWARMER_SPEED_PER_WAVE) * SPEED_MULTIPLIER;
       target.fireInterval = 0;
     } else if (type === 'boss') {
       const bossHp = 10 + Math.floor(wave / 5) * 5;
       target.hp = bossHp;
       target.maxHp = bossHp;
       target.speed = 0;
-      target.fireInterval = 1.8;
+      target.fireInterval = 1.8 / FIRE_RATE_MULTIPLIER;
       target.orbitAngle = Math.atan2(dir.x, dir.z);
       target.orbitSpeed = (Math.random() < 0.5 ? -1 : 1) * 0.3;
     }
